@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق الدردشة الصوت والصورة - دردشتي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link href="https://unpkg.com/splitting@1.0.6/dist/splitting.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-bubble {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+        }
+        
+        .typing-indicator {
+            animation: typing 1.5s infinite;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .video-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-placeholder {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .audio-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        
+        .wave-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            animation: wave 1.5s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave {
+            0%, 100% { height: 10px; }
+            50% { height: 30px; }
+        }
+        
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 0 80px;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .hero-button {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .hero-button.primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .hero-button.primary:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero-button.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .hero-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .features-section {
+            padding: 100px 0;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+        
+        .stats-section {
+            padding: 80px 0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+        
+        .cta-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .cta-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        .cta-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2rem 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+        
+        .demo-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        
+        .demo-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-effect fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-comments text-white text-lg"></i>
+                </div>
+                <h1 class="text-white text-xl font-bold">دردشتي</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="index.html" class="text-yellow-300 font-medium">الرئيسية</a>
+                <a href="chat.html" class="text-white hover:text-yellow-300 transition-colors font-medium">دردشة</a>
+                <a href="voice.html" class="text-white hover:text-yellow-300 transition-colors font-medium">صوت</a>
+                <a href="video.html" class="text-white hover:text-yellow-300 transition-colors font-medium">فيديو</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="text-center mb-16">
+                <div class="chat-bubble inline-block mb-6">
+                    <div class="glass-effect rounded-full px-8 py-4">
+                        <span class="text-white text-lg font-medium">👋 مرحباً بك في تطبيق الدردشة الأحدث!</span>
+                    </div>
+                </div>
+                
+                <h1 class="hero-title text-white" data-splitting>
+                    تواصل بكل سهولة<br>
+                    <span class="gradient-text">صوت وصورة</span>
+                </h1>
+                
+                <p class="hero-subtitle text-white/80 max-w-3xl mx-auto">
+                    تجربة تواصل فريدة تجمع بين الدردشة النصية، المكالمات الصوتية، ومكالمات الفيديو عالية الجودة. 
+                    تواصل مع أحبائك وأصدقائك في أي وقت ومن أي مكان.
+                </p>
+                
+                <div class="hero-buttons">
+                    <a href="chat.html" class="hero-button primary">
+                        <i class="fas fa-comment"></i>
+                        ابدأ الدردشة
+                    </a>
+                    <a href="video.html" class="hero-button secondary">
+                        <i class="fas fa-video"></i>
+                        مكالمة فيديو
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Demo Previews -->
+            <div class="demo-container">
+                <!-- Chat Preview -->
+                <div class="demo-card">
+                    <div class="demo-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="demo-title">دردشة فورية</h3>
+                    <p class="text-sm opacity-80 mb-4">راسل أصدقائك بنصوص فورية مع دعم الرسائل الصوتية والصور</p>
+                    <div class="text-xs opacity-60">
+                        <div class="bg-blue-500 rounded-lg p-2 mb-2 text-right">
+                            مرحباً! كيف حالك؟
+                        </div>
+                        <div class="bg-gray-600 rounded-lg p-2 mb-2 text-left">
+                            أنا بخير، شكراً! 🌟
+                        </div>
+                        <div class="typing-indicator flex justify-center mt-2">
+                            <div class="w-2 h-2 bg-white/60 rounded-full mx-1"></div>
+                            <div class="w-2 h-2 bg-white/60 rounded-full mx-1"></div>
+                            <div class="w-2 h-2 bg-white/60 rounded-full mx-1"></div>
+                        </div>
+                    </div>
+                    <a href="chat.html" class="demo-button">
+                        تجربة الدردشة
+                    </a>
+                </div>
+                
+                <!-- Voice Call Preview -->
+                <div class="demo-card">
+                    <div class="demo-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div class="demo-title">مكالمات صوتية</div>
+                    <p class="text-sm opacity-80 mb-4">اتصل بأي شخص في أي مكان بجودة صوت نقية وواضحة</p>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center pulse-ring">
+                            <i class="fas fa-phone text-white text-xl"></i>
+                        </div>
+                        <div class="audio-wave mb-4">
+                            <div class="wave-bar" style="height: 15px;"></div>
+                            <div class="wave-bar" style="height: 25px;"></div>
+                            <div class="wave-bar" style="height: 20px;"></div>
+                            <div class="wave-bar" style="height: 30px;"></div>
+                            <div class="wave-bar" style="height: 18px;"></div>
+                        </div>
+                        <div class="text-lg font-bold">15:30</div>
+                    </div>
+                    <a href="voice.html" class="demo-button">
+                        تجربة الصوت
+                    </a>
+                </div>
+                
+                <!-- Video Call Preview -->
+                <div class="demo-card">
+                    <div class="demo-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="demo-title">مكالمات فيديو</div>
+                    <p class="text-sm opacity-80 mb-4">تواصل وجهاً لوجه مع أحبائك بجودة فيديو عالية الدقة</p>
+                    <div class="video-container h-32 mb-4">
+                        <div class="video-placeholder w-full h-full">
+                            <div class="text-center">
+                                <i class="fas fa-video text-2xl mb-1"></i>
+                                <p class="text-xs">HD Video</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2">
+                            <div class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                                <i class="fas fa-record-vinyl ml-1"></i>
+                                REC
+                            </div>
+                        </div>
+                    </div>
+                    <a href="video.html" class="demo-button">
+                        تجربة الفيديو
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-4">المميزات الرائعة</h2>
+                <p class="text-white/80 text-lg">كل ما تحتاجه للتواصل الفعال في مكان واحد</p>
+            </div>
+            
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3 class="feature-title">دردشة فورية</h3>
+                    <p class="feature-description">راسل أصدقائك بنصوص فورية مع دعم الرسائل الصوتية والصور والملصقات</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <h3 class="feature-title">مكالمات صوتية</h3>
+                    <p class="feature-description">اتصل بأي شخص في أي مكان بجودة صوت نقية وواضحة</p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h3 class="feature-title">مكالمات فيديو</h3>
+                    <p class="feature-description">تواصل وجهاً لوجه مع أحبائك بجودة فيديو عالية الدقة</p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">مجموعات</h3>
+                    <p class="feature-description">أنشئ مجموعات للتواصل مع العائلة والأصدقاء وزملاء العمل</p>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3 class="feature-title">أمان تام</h3>
+                    <p class="feature-description">تشفير شامل لحماية خصوصيتك وأمان بياناتك</p>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">متعدد المنصات</h3>
+                    <p class="feature-description">استخدم التطبيق على جميع أجهزتك بنفس الجودة</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="stats-grid">
+                <div>
+                    <div class="stat-number" data-count="1000000">0</div>
+                    <div class="stat-label">مستخدم نشط</div>
+                </div>
+                <div>
+                    <div class="stat-number" data-count="50000000">0</div>
+                    <div class="stat-label">رسالة يومياً</div>
+                </div>
+                <div>
+                    <div class="stat-number" data-count="10000000">0</div>
+                    <div class="stat-label">مكالمة شهرية</div>
+                </div>
+                <div>
+                    <div class="stat-number" data-count="50">0</div>
+                    <div class="stat-label">دولة مدعومة</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="cta-container">
+                <h2 class="cta-title">جاهز للبدء؟</h2>
+                <p class="cta-description">انضم إلى الملايين الذين يستخدمون تطبيقنا للتواصل اليوم</p>
+                <div class="hero-buttons">
+                    <a href="chat.html" class="hero-button primary">
+                        ابدأ الآن مجاناً
+                    </a>
+                    <button onclick="showComingSoon()" class="hero-button secondary">
+                        تحميل التطبيق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <p>&copy; 2025 تطبيق دردشتي. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Splitting text animation
+            Splitting();
+            
+            // Animate hero text
+            anime({
+                targets: '[data-splitting] .char',
+                translateY: [100, 0],
+                opacity: [0, 1],
+                easing: 'easeOutExpo',
+                duration: 1400,
+                delay: anime.stagger(30)
+            });
+            
+            // Animate feature cards
+            anime({
+                targets: '.feature-card',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                duration: 1200,
+                delay: anime.stagger(100, {start: 500}),
+                easing: 'easeOutExpo'
+            });
+            
+            // Animate demo cards
+            anime({
+                targets: '.demo-card',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 1000,
+                delay: anime.stagger(200, {start: 1000}),
+                easing: 'easeOutBack'
+            });
+            
+            // Animate stats
+            animateStats();
+        });
+        
+        // Animate stats counter
+        function animateStats() {
+            const stats = document.querySelectorAll('.stat-number');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        const finalValue = parseInt(target.dataset.count);
+                        
+                        anime({
+                            targets: { value: 0 },
+                            value: finalValue,
+                            duration: 2000,
+                            easing: 'easeOutExpo',
+                            update: function(anim) {
+                                target.textContent = Math.floor(anim.animatables[0].target.value).toLocaleString();
+                            }
+                        });
+                        
+                        observer.unobserve(target);
+                    }
+                });
+            });
+            
+            stats.forEach(stat => observer.observe(stat));
+        }
+        
+        function showComingSoon() {
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-download text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">قريباً!</h3>
+                    <p class="text-gray-600 mb-6">تطبيق الهاتف قيد التطوير حالياً وسيتوفر قريباً على متجر التطبيقات</p>
+                    <button onclick="this.closest('.fixed').remove()" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-full font-bold hover:shadow-lg transition-all">
+                        فهمت
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Animate modal
+            anime({
+                targets: modal.querySelector('div'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutBack'
+            });
+        }
+        
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Parallax effect for hero section
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero-section');
+            if (hero) {
+                hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+    </script>
+</body>
+</html>

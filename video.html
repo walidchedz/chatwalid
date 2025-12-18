@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مكالمة فيديو - دردشتي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link href="https://unpkg.com/splitting@1.0.6/dist/splitting.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .video-container {
+            height: calc(100vh - 140px);
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            margin: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1f2937, #374151);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .remote-video-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
+        }
+        
+        .remote-video-placeholder::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .local-video {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 220px;
+            height: 165px;
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        
+        .local-video:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .local-video-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .local-video-placeholder::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(79, 70, 229, 0.8), rgba(124, 58, 237, 0.8));
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-button {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .control-button::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 50%;
+            opacity: 0.3;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .control-button:active::before {
+            transform: scale(1.2);
+        }
+        
+        .control-button:hover {
+            transform: scale(1.15) translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-button.video {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+        
+        .control-button.video.off {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+        
+        .control-button.mic {
+            background: linear-gradient(45deg, #3b82f6, #2563eb);
+        }
+        
+        .control-button.mic.off {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+        }
+        
+        .control-button.end-call {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            width: 75px;
+            height: 75px;
+            font-size: 26px;
+        }
+        
+        .control-button.more {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+        }
+        
+        .call-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 20px;
+            z-index: 15;
+            min-width: 220px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .call-timer {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .call-status {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .participant-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .connection-quality {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .quality-indicator {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .recording-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            display: none;
+            z-index: 20;
+            animation: pulse 1s infinite;
+            backdrop-filter: blur(10px);
+        }
+        
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+        }
+        
+        .floating-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.4);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .floating-button:hover {
+            background: rgba(0, 0, 0, 0.6);
+            transform: scale(1.1);
+        }
+        
+        .chat-overlay {
+            position: absolute;
+            bottom: 120px;
+            right: 20px;
+            width: 320px;
+            height: 240px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            color: white;
+            font-size: 13px;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .chat-input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.5);
+        }
+        
+        .screen-share-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #1f2937, #374151);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+            border-radius: 20px;
+        }
+        
+        .screen-share-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .participants-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            padding: 20px;
+            z-index: 20;
+        }
+        
+        .participant-video {
+            background: linear-gradient(45deg, #374151, #4b5563);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .participant-video::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(79, 70, 229, 0.2), rgba(124, 58, 237, 0.2));
+            animation: shimmer 4s infinite;
+        }
+        
+        .watermark {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            z-index: 5;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-effect fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-comments text-white text-lg"></i>
+                </div>
+                <h1 class="text-white text-xl font-bold">دردشتي</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="index.html" class="text-white hover:text-yellow-300 transition-colors font-medium">الرئيسية</a>
+                <a href="chat.html" class="text-white hover:text-yellow-300 transition-colors font-medium">دردشة</a>
+                <a href="voice.html" class="text-white hover:text-yellow-300 transition-colors font-medium">صوت</a>
+                <a href="video.html" class="text-yellow-300 font-medium">فيديو</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Video Container -->
+    <div class="video-container">
+        <!-- Remote Video -->
+        <div class="remote-video">
+            <div class="remote-video-placeholder">
+                <div class="text-center z-10">
+                    <i class="fas fa-user text-white text-8xl mb-6"></i>
+                    <h3 class="text-3xl font-bold mb-3">أحمد محمد</h3>
+                    <p class="text-lg opacity-80">مكالمة فيديو نشطة</p>
+                    <div class="mt-6">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-sm">متصل الآن</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recording Indicator -->
+            <div class="recording-indicator" id="recordingIndicator">
+                <i class="fas fa-record-vinyl ml-2"></i>
+                جاري التسجيل
+            </div>
+            
+            <!-- Watermark -->
+            <div class="watermark">دردشتي - مكالمة فيديو</div>
+        </div>
+        
+        <!-- Local Video -->
+        <div class="local-video">
+            <div class="local-video-placeholder">
+                <i class="fas fa-user text-white text-3xl"></i>
+            </div>
+        </div>
+        
+        <!-- Call Info -->
+        <div class="call-info">
+            <div class="participant-name">أحمد محمد</div>
+            <div class="call-timer" id="callTimer">00:00</div>
+            <div class="call-status">مكالمة فيديو نشطة</div>
+            <div class="connection-quality">
+                <div class="quality-indicator"></div>
+                <span>جودة ممتازة - HD</span>
+            </div>
+        </div>
+        
+        <!-- Floating Controls -->
+        <div class="floating-controls">
+            <button class="floating-button" onclick="toggleChat()" title="الدردشة">
+                <i class="fas fa-comment"></i>
+            </button>
+            <button class="floating-button" onclick="toggleScreenShare()" title="مشاركة الشاشة">
+                <i class="fas fa-desktop"></i>
+            </button>
+            <button class="floating-button" onclick="toggleRecording()" title="تسجيل">
+                <i class="fas fa-record-vinyl"></i>
+            </button>
+            <button class="floating-button" onclick="toggleParticipantsView()" title="عرض المشاركين">
+                <i class="fas fa-users"></i>
+            </button>
+        </div>
+        
+        <!-- Video Controls -->
+        <div class="video-controls">
+            <button class="control-button video" id="videoButton" onclick="toggleVideo()" title="تشغيل/إيقاف الكاميرا">
+                <i class="fas fa-video" id="videoIcon"></i>
+            </button>
+            <button class="control-button mic" id="micButton" onclick="toggleMic()" title="كتم/إلغاء كتم الميكروفون">
+                <i class="fas fa-microphone" id="micIcon"></i>
+            </button>
+            <button class="control-button end-call" onclick="endCall()" title="إنهاء المكالمة">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+            <button class="control-button more" onclick="showMoreOptions()" title="المزيد من الخيارات">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+        </div>
+        
+        <!-- Participants Grid View -->
+        <div class="participants-grid" id="participantsGrid">
+            <div class="participant-video">
+                <i class="fas fa-user text-4xl"></i>
+                <div class="absolute bottom-4 left-4 text-sm">أحمد محمد</div>
+            </div>
+            <div class="participant-video">
+                <i class="fas fa-user text-4xl"></i>
+                <div class="absolute bottom-4 left-4 text-sm">أنا</div>
+            </div>
+            <div class="participant-video">
+                <i class="fas fa-plus text-4xl"></i>
+                <div class="absolute bottom-4 left-4 text-sm">إضافة مشارك</div>
+            </div>
+            <div class="participant-video">
+                <i class="fas fa-plus text-4xl"></i>
+                <div class="absolute bottom-4 left-4 text-sm">إضافة مشارك</div>
+            </div>
+        </div>
+        
+        <!-- Screen Share Overlay -->
+        <div class="screen-share-overlay" id="screenShareOverlay">
+            <div class="screen-share-content">
+                <i class="fas fa-desktop text-white text-8xl mb-6"></i>
+                <h3 class="text-3xl font-bold mb-4">مشاركة الشاشة نشطة</h3>
+                <p class="text-lg opacity-80 mb-8">يتم مشاركة شاشتك مع المشاركين في المكالمة</p>
+                <button class="control-button end-call" onclick="stopScreenShare()">
+                    <i class="fas fa-stop mr-2"></i>
+                    إيقاف المشاركة
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Overlay -->
+        <div class="chat-overlay" id="chatOverlay">
+            <div class="chat-messages" id="chatMessages">
+                <div class="mb-2"><strong class="text-blue-400">أحمد:</strong> مرحباً! كيف حالك؟ 👋</div>
+                <div class="mb-2"><strong class="text-green-400">أنا:</strong> أهلاً! بخير، شكراً لسؤالك 😊</div>
+                <div class="mb-2"><strong class="text-blue-400">أحمد:</strong> هل تراني بوضوح؟</div>
+                <div class="mb-2"><strong class="text-green-400">أنا:</strong> نعم، الصورة واضحة جداً والصوت ممتاز! 🎥</div>
+                <div class="mb-2"><strong class="text-blue-400">أحمد:</strong> ممتاز! دعنا نبدأ الاجتماع</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="اكتب رسالتك..." onkeypress="handleChatKeyPress(event)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let callStartTime = null;
+        let callTimer = null;
+        let isVideoOn = true;
+        let isMicOn = true;
+        let isRecording = false;
+        let isScreenSharing = false;
+        let isChatOpen = false;
+        let isParticipantsView = false;
+        let isCallActive = false;
+        
+        // Initialize call
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-start call after 3 seconds (demo)
+            setTimeout(() => {
+                if (!isCallActive) {
+                    startCall();
+                }
+            }, 3000);
+            
+            // Initialize animations
+            initializeAnimations();
+        });
+        
+        // Initialize animations
+        function initializeAnimations() {
+            // Animate local video
+            anime({
+                targets: '.local-video',
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 1000,
+                delay: 1000,
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            // Animate call info
+            anime({
+                targets: '.call-info',
+                translateX: [100, 0],
+                opacity: [0, 1],
+                duration: 800,
+                delay: 1500,
+                easing: 'easeOutQuad'
+            });
+            
+            // Animate floating controls
+            anime({
+                targets: '.floating-controls .floating-button',
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 600,
+                delay: anime.stagger(100, {start: 2000}),
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            // Animate video controls
+            anime({
+                targets: '.video-controls .control-button',
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 600,
+                delay: anime.stagger(100, {start: 2500}),
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+        
+        // Start call
+        function startCall() {
+            isCallActive = true;
+            callStartTime = new Date();
+            startCallTimer();
+            
+            // Show success message
+            showNotification('تم بدء المكالمة بنجاح!', 'success');
+        }
+        
+        // Start call timer
+        function startCallTimer() {
+            callTimer = setInterval(() => {
+                const now = new Date();
+                const elapsed = Math.floor((now - callStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                
+                document.getElementById('callTimer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        // Toggle video
+        function toggleVideo() {
+            isVideoOn = !isVideoOn;
+            const button = document.getElementById('videoButton');
+            const icon = document.getElementById('videoIcon');
+            const localVideo = document.querySelector('.local-video');
+            
+            if (isVideoOn) {
+                button.classList.remove('off');
+                icon.className = 'fas fa-video';
+                localVideo.style.opacity = '1';
+                localVideo.style.filter = 'none';
+                showNotification('تم تشغيل الكاميرا', 'info');
+            } else {
+                button.classList.add('off');
+                icon.className = 'fas fa-video-slash';
+                localVideo.style.opacity = '0.5';
+                localVideo.style.filter = 'grayscale(100%)';
+                showNotification('تم إيقاف الكاميرا', 'warning');
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Toggle microphone
+        function toggleMic() {
+            isMicOn = !isMicOn;
+            const button = document.getElementById('micButton');
+            const icon = document.getElementById('micIcon');
+            
+            if (isMicOn) {
+                button.classList.remove('off');
+                icon.className = 'fas fa-microphone';
+                showNotification('تم إلغاء كتم الميكروفون', 'info');
+            } else {
+                button.classList.add('off');
+                icon.className = 'fas fa-microphone-slash';
+                showNotification('تم كتم الميكروفون', 'warning');
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Toggle recording
+        function toggleRecording() {
+            isRecording = !isRecording;
+            const indicator = document.getElementById('recordingIndicator');
+            const button = event.target.closest('.floating-button');
+            
+            if (isRecording) {
+                indicator.style.display = 'block';
+                button.style.background = 'rgba(239, 68, 68, 0.8)';
+                showNotification('بدء تسجيل المكالمة', 'success');
+            } else {
+                indicator.style.display = 'none';
+                button.style.background = 'rgba(0, 0, 0, 0.4)';
+                showNotification('إيقاف تسجيل المكالمة', 'info');
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Toggle screen share
+        function toggleScreenShare() {
+            isScreenSharing = !isScreenSharing;
+            const overlay = document.getElementById('screenShareOverlay');
+            const button = event.target.closest('.floating-button');
+            
+            if (isScreenSharing) {
+                overlay.style.display = 'flex';
+                button.style.background = 'rgba(59, 130, 246, 0.8)';
+                showNotification('بدء مشاركة الشاشة', 'success');
+                
+                // Animate overlay
+                anime({
+                    targets: overlay,
+                    opacity: [0, 1],
+                    duration: 500,
+                    easing: 'easeOutQuad'
+                });
+            } else {
+                stopScreenShare();
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Stop screen share
+        function stopScreenShare() {
+            isScreenSharing = false;
+            const overlay = document.getElementById('screenShareOverlay');
+            const button = document.querySelector('.floating-button:nth-child(2)');
+            
+            overlay.style.display = 'none';
+            button.style.background = 'rgba(0, 0, 0, 0.4)';
+            showNotification('إيقاف مشاركة الشاشة', 'info');
+        }
+        
+        // Toggle chat
+        function toggleChat() {
+            isChatOpen = !isChatOpen;
+            const chatOverlay = document.getElementById('chatOverlay');
+            const button = event.target.closest('.floating-button');
+            
+            if (isChatOpen) {
+                chatOverlay.style.display = 'flex';
+                button.style.background = 'rgba(16, 185, 129, 0.8)';
+                
+                // Animate chat overlay
+                anime({
+                    targets: chatOverlay,
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            } else {
+                chatOverlay.style.display = 'none';
+                button.style.background = 'rgba(0, 0, 0, 0.4)';
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Toggle participants view
+        function toggleParticipantsView() {
+            isParticipantsView = !isParticipantsView;
+            const grid = document.getElementById('participantsGrid');
+            const remoteVideo = document.querySelector('.remote-video');
+            const button = event.target.closest('.floating-button');
+            
+            if (isParticipantsView) {
+                grid.style.display = 'grid';
+                remoteVideo.style.opacity = '0.3';
+                button.style.background = 'rgba(139, 92, 246, 0.8)';
+                showNotification('عرض المشاركين النشط', 'info');
+                
+                // Animate grid
+                anime({
+                    targets: '.participant-video',
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 500,
+                    delay: anime.stagger(100),
+                    easing: 'easeOutBack'
+                });
+            } else {
+                grid.style.display = 'none';
+                remoteVideo.style.opacity = '1';
+                button.style.background = 'rgba(0, 0, 0, 0.4)';
+            }
+            
+            // Animate button
+            animateButton(button);
+        }
+        
+        // Handle chat key press
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const message = input.value.trim();
+                
+                if (message) {
+                    const chatMessages = document.getElementById('chatMessages');
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'mb-2';
+                    messageDiv.innerHTML = `<strong class="text-green-400">أنا:</strong> ${message}`;
+                    chatMessages.appendChild(messageDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    input.value = '';
+                    
+                    // Simulate response
+                    setTimeout(() => {
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'mb-2';
+                        responseDiv.innerHTML = `<strong class="text-blue-400">أحمد:</strong> شكراً لرسالتك! 😊`;
+                        chatMessages.appendChild(responseDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Show more options
+        function showMoreOptions() {
+            const options = [
+                'تغيير جودة الفيديو',
+                'تفعيل الترجمة الفورية',
+                'إضافة مشاركين',
+                'تغيير الخلفية',
+                'الإعدادات'
+            ];
+            
+            const randomOption = options[Math.floor(Math.random() * options.length)];
+            showNotification(`${randomOption} - قريباً!`, 'info');
+            
+            // Animate button
+            animateButton(event.target.closest('.control-button'));
+        }
+        
+        // End call
+        function endCall() {
+            // Clear timer
+            if (callTimer) {
+                clearInterval(callTimer);
+            }
+            
+            // Animate end call
+            anime({
+                targets: '.video-container',
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 600,
+                easing: 'easeInQuad',
+                complete: () => {
+                    showCallEnded();
+                }
+            });
+        }
+        
+        // Show call ended
+        function showCallEnded() {
+            const videoContainer = document.querySelector('.video-container');
+            const duration = document.getElementById('callTimer').textContent;
+            
+            videoContainer.innerHTML = `
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center text-white">
+                        <div class="w-32 h-32 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full mx-auto mb-8 flex items-center justify-center shadow-2xl">
+                            <i class="fas fa-video-slash text-4xl"></i>
+                        </div>
+                        <h2 class="text-4xl font-bold mb-6">تم إنهاء المكالمة</h2>
+                        <p class="text-xl opacity-80 mb-8">مدة المكالمة: ${duration}</p>
+                        <div class="flex gap-6 justify-center">
+                            <button class="control-button" onclick="window.location.href='chat.html'" style="background: linear-gradient(45deg, #667eea, #764ba2); width: 80px; height: 80px;">
+                                <i class="fas fa-comment text-2xl"></i>
+                            </button>
+                            <button class="control-button" onclick="window.location.href='voice.html'" style="background: linear-gradient(45deg, #10b981, #059669); width: 80px; height: 80px;">
+                                <i class="fas fa-phone text-2xl"></i>
+                            </button>
+                            <button class="control-button" onclick="window.location.href='index.html'" style="background: linear-gradient(45deg, #8b5cf6, #7c3aed); width: 80px; height: 80px;">
+                                <i class="fas fa-home text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Animate new content
+            anime({
+                targets: '.video-container > div',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 600,
+                easing: 'easeOutQuad'
+            });
+        }
+        
+        // Animate button
+        function animateButton(button) {
+            anime({
+                targets: button,
+                scale: [1, 1.2, 1],
+                duration: 300,
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full text-white font-medium shadow-lg`;
+            
+            switch(type) {
+                case 'success':
+                    notification.className += ' bg-green-500';
+                    break;
+                case 'warning':
+                    notification.className += ' bg-yellow-500';
+                    break;
+                case 'error':
+                    notification.className += ' bg-red-500';
+                    break;
+                default:
+                    notification.className += ' bg-blue-500';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate notification
+            anime({
+                targets: notification,
+                translateY: [-20, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: () => {
+                    setTimeout(() => {
+                        anime({
+                            targets: notification,
+                            translateY: [0, -20],
+                            opacity: [1, 0],
+                            duration: 300,
+                            easing: 'easeInQuad',
+                            complete: () => {
+                                document.body.removeChild(notification);
+                            }
+                        });
+                    }, 2000);
+                }
+            });
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (isCallActive) {
+                switch(event.key) {
+                    case 'v':
+                    case 'ض':
+                        if (event.ctrlKey || event.metaKey) return;
+                        toggleVideo();
+                        break;
+                    case 'm':
+                    case 'ة':
+                        toggleMic();
+                        break;
+                    case 'r':
+                    case 'ق':
+                        if (event.ctrlKey || event.metaKey) return;
+                        toggleRecording();
+                        break;
+                    case 'c':
+                    case 'ؤ':
+                        toggleChat();
+                        break;
+                    case 's':
+                    case 'س':
+                        toggleScreenShare();
+                        break;
+                    case 'p':
+                    case 'ح':
+                        toggleParticipantsView();
+                        break;
+                    case 'Escape':
+                        endCall();
+                        break;
+                }
+            }
+        });
+        
+        // Auto-hide controls after inactivity
+        let inactivityTimer;
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            const controls = document.querySelector('.video-controls');
+            const info = document.querySelector('.call-info');
+            const floating = document.querySelector('.floating-controls');
+            
+            if (controls) controls.style.opacity = '1';
+            if (info) info.style.opacity = '1';
+            if (floating) floating.style.opacity = '1';
+            
+            inactivityTimer = setTimeout(() => {
+                if (controls) controls.style.opacity = '0.2';
+                if (info) info.style.opacity = '0.2';
+                if (floating) floating.style.opacity = '0.2';
+            }, 8000);
+        }
+        
+        // Reset timer on any interaction
+        document.addEventListener('mousemove', resetInactivityTimer);
+        document.addEventListener('click', resetInactivityTimer);
+        document.addEventListener('keypress', resetInactivityTimer);
+        
+        // Initialize
+        resetInactivityTimer();
+    </script>
+</body>
+</html>

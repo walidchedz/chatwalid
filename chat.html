@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دردشة نصية - دردشتي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-container {
+            height: calc(100vh - 140px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .message {
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-sent {
+            text-align: left;
+        }
+        
+        .message-received {
+            text-align: right;
+        }
+        
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message-sent .message-bubble {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-left-radius: 6px;
+        }
+        
+        .message-received .message-bubble {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-bottom-right-radius: 6px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        
+        .message-status {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+        
+        .message-sent .message-status {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .message-received .message-status {
+            color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            border-bottom-right-radius: 6px;
+            max-width: 100px;
+            margin-bottom: 16px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .message-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 25px;
+            padding: 14px 20px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            min-height: 48px;
+            resize: none;
+        }
+        
+        .message-input:focus {
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+        
+        .send-button {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .action-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .online-status {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .emoji-picker {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .emoji {
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .emoji:hover {
+            background: #f3f4f6;
+            transform: scale(1.2);
+        }
+        
+        .scroll-to-bottom {
+            position: fixed;
+            bottom: 110px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            background: rgba(102, 126, 234, 0.9);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .scroll-to-bottom:hover {
+            transform: scale(1.1);
+            background: rgba(102, 126, 234, 1);
+        }
+        
+        .unread-badge {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .message-sender {
+            font-size: 12px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .message-content {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .message-sent .message-content {
+            flex-direction: row-reverse;
+        }
+        
+        .message-sent .message-avatar {
+            margin-left: 0;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-effect fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-comments text-white text-lg"></i>
+                </div>
+                <h1 class="text-white text-xl font-bold">دردشتي</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="index.html" class="text-white hover:text-yellow-300 transition-colors font-medium">الرئيسية</a>
+                <a href="chat.html" class="text-yellow-300 font-medium">دردشة</a>
+                <a href="voice.html" class="text-white hover:text-yellow-300 transition-colors font-medium">صوت</a>
+                <a href="video.html" class="text-white hover:text-yellow-300 transition-colors font-medium">فيديو</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Chat Header -->
+    <div class="glass-effect mt-20 mx-6 rounded-t-2xl">
+        <div class="flex items-center justify-between p-6">
+            <div class="flex items-center">
+                <div class="relative">
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div class="absolute -bottom-1 -left-1">
+                        <div class="online-status"></div>
+                    </div>
+                </div>
+                <div class="mr-4">
+                    <h2 class="text-white font-bold text-lg">أحمد محمد</h2>
+                    <p class="text-white/70 text-sm">متصل الآن</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="action-button" onclick="startVoiceCall()">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <button class="action-button" onclick="startVideoCall()">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="action-button relative" onclick="showMoreOptions()">
+                    <i class="fas fa-ellipsis-v"></i>
+                    <div class="unread-badge" id="unreadBadge">3</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="mx-6 chat-container glass-effect">
+        <!-- Messages Area -->
+        <div class="messages-area" id="messagesArea">
+            <!-- Welcome Message -->
+            <div class="message message-received">
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="message-header">
+                            <div class="message-sender">أحمد محمد</div>
+                        </div>
+                        <div class="message-bubble">
+                            مرحباً! كيف يمكنني مساعدتك اليوم؟ 😊
+                            <div class="message-time">الآن</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sample Messages -->
+            <div class="message message-sent">
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="message-bubble">
+                            أهلاً! أنا بخير، شكراً لسؤالك
+                            <div class="message-time">الآن</div>
+                            <div class="message-status">✓✓ تمت القراءة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message message-received">
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="message-header">
+                            <div class="message-sender">أحمد محمد</div>
+                        </div>
+                        <div class="message-bubble">
+                            هذا رائع! هل تريد تجربة مكالمة صوتية أو فيديو؟
+                            <div class="message-time">الآن</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message message-sent">
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="message-bubble">
+                            نعم، دعني أجرب مكالمة فيديو
+                            <div class="message-time">الآن</div>
+                            <div class="message-status">✓ تم الإرسال</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Typing Indicator -->
+        <div class="message message-received">
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="mx-6 glass-effect rounded-b-2xl">
+        <div class="input-area">
+            <div class="input-container">
+                <button class="action-button" onclick="toggleEmojiPicker()" title="إيموجي">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <textarea 
+                    class="message-input" 
+                    placeholder="اكتب رسالتك..."
+                    id="messageInput"
+                    rows="1"
+                    onkeypress="handleKeyPress(event)"
+                    oninput="autoResize(this)"
+                ></textarea>
+                <button class="action-button" onclick="attachFile()" title="إرفاق ملف">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <button class="send-button" onclick="sendMessage()" title="إرسال" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" id="emojiPicker">
+        <span class="emoji" onclick="insertEmoji('😊')">😊</span>
+        <span class="emoji" onclick="insertEmoji('😂')">😂</span>
+        <span class="emoji" onclick="insertEmoji('❤️')">❤️</span>
+        <span class="emoji" onclick="insertEmoji('👍')">👍</span>
+        <span class="emoji" onclick="insertEmoji('🙏')">🙏</span>
+        <span class="emoji" onclick="insertEmoji('🔥')">🔥</span>
+        <span class="emoji" onclick="insertEmoji('💯')">💯</span>
+        <span class="emoji" onclick="insertEmoji('✨')">✨</span>
+        <span class="emoji" onclick="insertEmoji('🌟')">🌟</span>
+        <span class="emoji" onclick="insertEmoji('💪')">💪</span>
+        <span class="emoji" onclick="insertEmoji('🎉')">🎉</span>
+        <span class="emoji" onclick="insertEmoji('🤝')">🤝</span>
+        <span class="emoji" onclick="insertEmoji('😍')">😍</span>
+        <span class="emoji" onclick="insertEmoji('🥰')">🥰</span>
+        <span class="emoji" onclick="insertEmoji('😎')">😎</span>
+        <span class="emoji" onclick="insertEmoji('🤗')">🤗</span>
+        <span class="emoji" onclick="insertEmoji('🤔')">🤔</span>
+        <span class="emoji" onclick="insertEmoji('😴')">😴</span>
+        <span class="emoji" onclick="insertEmoji('😇')">😇</span>
+        <span class="emoji" onclick="insertEmoji('🤩')">🤩</span>
+        <span class="emoji" onclick="insertEmoji('😋')">😋</span>
+        <span class="emoji" onclick="insertEmoji('😜')">😜</span>
+        <span class="emoji" onclick="insertEmoji('🤪')">🤪</span>
+        <span class="emoji" onclick="insertEmoji('😝')">😝</span>
+        <span class="emoji" onclick="insertEmoji('🤑')">🤑</span>
+        <span class="emoji" onclick="insertEmoji('🤭')">🤭</span>
+        <span class="emoji" onclick="insertEmoji('🤫')">🤫</span>
+        <span class="emoji" onclick="insertEmoji('🤥')">🤥</span>
+        <span class="emoji" onclick="insertEmoji('😶')">😶</span>
+        <span class="emoji" onclick="insertEmoji('😐')">😐</span>
+        <span class="emoji" onclick="insertEmoji('😑')">😑</span>
+        <span class="emoji" onclick="insertEmoji('😬')">😬</span>
+        <span class="emoji" onclick="insertEmoji('🙄')">🙄</span>
+        <span class="emoji" onclick="insertEmoji('😯')">😯</span>
+        <span class="emoji" onclick="insertEmoji('😦')">😦</span>
+        <span class="emoji" onclick="insertEmoji('😧')">😧</span>
+        <span class="emoji" onclick="insertEmoji('😮')">😮</span>
+        <span class="emoji" onclick="insertEmoji('😲')">😲</span>
+        <span class="emoji" onclick="insertEmoji('🥱')">🥱</span>
+        <span class="emoji" onclick="insertEmoji('😤')">😤</span>
+        <span class="emoji" onclick="insertEmoji('😡')">😡</span>
+        <span class="emoji" onclick="insertEmoji('😠')">😠</span>
+        <span class="emoji" onclick="insertEmoji('🤬')">🤬</span>
+        <span class="emoji" onclick="insertEmoji('😈')">😈</span>
+        <span class="emoji" onclick="insertEmoji('👿')">👿</span>
+        <span class="emoji" onclick="insertEmoji('💀')">💀</span>
+        <span class="emoji" onclick="insertEmoji('☠️')">☠️</span>
+        <span class="emoji" onclick="insertEmoji('💩')">💩</span>
+        <span class="emoji" onclick="insertEmoji('🤡')">🤡</span>
+        <span class="emoji" onclick="insertEmoji('👹')">👹</span>
+        <span class="emoji" onclick="insertEmoji('👺')">👺</span>
+        <span class="emoji" onclick="insertEmoji('👻')">👻</span>
+        <span class="emoji" onclick="insertEmoji('👽')">👽</span>
+        <span class="emoji" onclick="insertEmoji('👾')">👾</span>
+        <span class="emoji" onclick="insertEmoji('🤖')">🤖</span>
+        <span class="emoji" onclick="insertEmoji('😺')">😺</span>
+        <span class="emoji" onclick="insertEmoji('😸')">😸</span>
+        <span class="emoji" onclick="insertEmoji('😹')">😹</span>
+        <span class="emoji" onclick="insertEmoji('😻')">😻</span>
+        <span class="emoji" onclick="insertEmoji('😼')">😼</span>
+        <span class="emoji" onclick="insertEmoji('😽')">😽</span>
+        <span class="emoji" onclick="insertEmoji('🙀')">🙀</span>
+        <span class="emoji" onclick="insertEmoji('😿')">😿</span>
+        <span class="emoji" onclick="insertEmoji('😾')">😾</span>
+        <span class="emoji" onclick="insertEmoji('❤️')">❤️</span>
+        <span class="emoji" onclick="insertEmoji('🧡')">🧡</span>
+        <span class="emoji" onclick="insertEmoji('💛')">💛</span>
+        <span class="emoji" onclick="insertEmoji('💚')">💚</span>
+        <span class="emoji" onclick="insertEmoji('💙')">💙</span>
+        <span class="emoji" onclick="insertEmoji('💜')">💜</span>
+        <span class="emoji" onclick="insertEmoji('🖤')">🖤</span>
+        <span class="emoji" onclick="insertEmoji('🤍')">🤍</span>
+        <span class="emoji" onclick="insertEmoji('🤎')">🤎</span>
+    </div>
+
+    <!-- Scroll to Bottom Button -->
+    <div class="scroll-to-bottom" id="scrollToBottom" onclick="scrollToBottom()">
+        <i class="fas fa-arrow-down"></i>
+    </div>
+
+    <script>
+        let messageCount = 0;
+        const messagesArea = document.getElementById('messagesArea');
+        const messageInput = document.getElementById('messageInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const scrollToBottomBtn = document.getElementById('scrollToBottom');
+        const unreadBadge = document.getElementById('unreadBadge');
+        
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+        
+        // Show/hide scroll to bottom button
+        messagesArea.addEventListener('scroll', function() {
+            const threshold = messagesArea.scrollHeight - messagesArea.clientHeight - 100;
+            if (messagesArea.scrollTop < threshold) {
+                scrollToBottomBtn.style.display = 'flex';
+            } else {
+                scrollToBottomBtn.style.display = 'none';
+            }
+        });
+        
+        // Send message function
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add sent message
+            addMessage(message, 'sent');
+            messageInput.value = '';
+            autoResize(messageInput);
+            
+            // Hide unread badge
+            if (unreadBadge.style.display !== 'none') {
+                unreadBadge.style.display = 'none';
+            }
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate response after 1-3 seconds
+            setTimeout(() => {
+                hideTypingIndicator();
+                const responses = [
+                    'شكراً لرسالتك! 😊 كيف يمكنني مساعدتك أكثر؟',
+                    'هذا رائع! أنا سعيد بحديثنا',
+                    'أتفهم ما تقوله تماماً',
+                    'ممتاز! هل تريد أن نتحدث أكثر؟',
+                    'أحب التواصل معك! 💙',
+                    'هل تريد تجربة مكالمة صوتية؟',
+                    'أنا هنا للمساعدة دائماً 💪',
+                    'شكراً لمشاركتك هذا معي',
+                    'رائع! ما رأيك في تجربة الفيديو؟',
+                    'أنا سعيد جداً بهذا الحديث 😊',
+                    'هل لديك أي أسئلة أخرى؟',
+                    'أنا مستعد للمساعدة في أي وقت!',
+                    'هذا مثير للاهتمام! أخبرني أكثر',
+                    'أحب سماع رأيك في هذا',
+                    'دعنا نستمر في المحادثة!'
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage(randomResponse, 'received');
+            }, Math.random() * 2000 + 1000);
+        }
+        
+        // Add message to chat
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-SA', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const status = type === 'sent' ? '✓ تم الإرسال' : '';
+            const senderName = type === 'received' ? 'أحمد محمد' : 'أنا';
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        ${type === 'received' ? `<div class="message-header"><div class="message-sender">${senderName}</div></div>` : ''}
+                        <div class="message-bubble">
+                            ${text}
+                            <div class="message-time">${timeString}</div>
+                            ${status ? `<div class="message-status">${status}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            messagesArea.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Animate new message
+            anime({
+                targets: messageDiv,
+                translateY: [20, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+        
+        // Show typing indicator
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+        }
+        
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+        
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // Auto resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+        
+        // Emoji picker functions
+        function toggleEmojiPicker() {
+            const emojiPicker = document.getElementById('emojiPicker');
+            emojiPicker.style.display = emojiPicker.style.display === 'grid' ? 'none' : 'grid';
+            
+            if (emojiPicker.style.display === 'grid') {
+                // Animate emoji picker
+                anime({
+                    targets: emojiPicker,
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 200,
+                    easing: 'easeOutBack'
+                });
+            }
+        }
+        
+        function insertEmoji(emoji) {
+            messageInput.value += emoji;
+            autoResize(messageInput);
+            messageInput.focus();
+            toggleEmojiPicker();
+        }
+        
+        // Hide emoji picker when clicking outside
+        document.addEventListener('click', function(event) {
+            const emojiPicker = document.getElementById('emojiPicker');
+            const smileButton = event.target.closest('.action-button');
+            
+            if (!emojiPicker.contains(event.target) && !smileButton) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+        
+        // Action functions
+        function startVoiceCall() {
+            window.location.href = 'voice.html';
+        }
+        
+        function startVideoCall() {
+            window.location.href = 'video.html';
+        }
+        
+        function showMoreOptions() {
+            const options = [
+                'عرض معلومات الاتصال',
+                'إرسال موقع',
+                'مشاركة جهة اتصال',
+                'حظر المستخدم',
+                'إبلاغ عن رسائل مزعجة',
+                'مسح المحادثة'
+            ];
+            
+            const randomOption = options[Math.floor(Math.random() * options.length)];
+            showNotification(`${randomOption} - قريباً!`, 'info');
+        }
+        
+        function attachFile() {
+            const fileTypes = ['صور', 'فيديو', 'مستندات', 'صوت'];
+            const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+            showNotification(`إرفاق ${randomType} - قريباً!`, 'info');
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full text-white font-medium shadow-lg`;
+            
+            switch(type) {
+                case 'success':
+                    notification.className += ' bg-green-500';
+                    break;
+                case 'warning':
+                    notification.className += ' bg-yellow-500';
+                    break;
+                case 'error':
+                    notification.className += ' bg-red-500';
+                    break;
+                default:
+                    notification.className += ' bg-blue-500';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate notification
+            anime({
+                targets: notification,
+                translateY: [-20, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: () => {
+                    setTimeout(() => {
+                        anime({
+                            targets: notification,
+                            translateY: [0, -20],
+                            opacity: [1, 0],
+                            duration: 300,
+                            easing: 'easeInQuad',
+                            complete: () => {
+                                if (document.body.contains(notification)) {
+                                    document.body.removeChild(notification);
+                                }
+                            }
+                        });
+                    }, 2000);
+                }
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            scrollToBottom();
+            messageInput.focus();
+            
+            // Hide unread badge after 5 seconds
+            setTimeout(() => {
+                if (unreadBadge.style.display !== 'none') {
+                    anime({
+                        targets: unreadBadge,
+                        scale: [1, 0],
+                        opacity: [1, 0],
+                        duration: 300,
+                        easing: 'easeInBack',
+                        complete: () => {
+                            unreadBadge.style.display = 'none';
+                        }
+                    });
+                }
+            }, 5000);
+        });
+        
+        // Simulate receiving messages
+        setInterval(() => {
+            if (Math.random() < 0.3) { // 30% chance every 10 seconds
+                const randomMessages = [
+                    'هل أنت متاح للحديث الآن؟',
+                    'لدي سؤال أريد أن أطرحه عليك',
+                    'ما رأيك في هذا الموضوع؟',
+                    'شكراً لتواصلك معي!',
+                    'هل يمكننا التحدث لاحقاً؟'
+                ];
+                const randomMessage = randomMessages[Math.floor(Math.random() * randomMessages.length)];
+                addMessage(randomMessage, 'received');
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
